@@ -95,13 +95,6 @@ checkRoot() {
   fi
 }
 
-checkApacheInstalled() {
-  apachectl=$(locate apachectl)
-  if [[ ${apachectl// } != "" ]]; then
-    error_exit "Previous instalation detected.\n\nPlease uninstall everything before running this parameter (Apache, Tomcat, Postgres...), or simple sun $PROGNAME -u to update.\n"
-  fi
-}
-
 addRepositories() {
   REPOADDED=$(grep 'apt.postgresql' /etc/apt/sources.list)
   if [[ $REPOADDED == "" ]]; then
@@ -128,14 +121,18 @@ installJava() {
   fi
 }
 
-installApache() {
-  printf "\nInstalling Apache 2...\n";
-  apt-get -qq -y install apache2 maven > /dev/null
-}
-
 installTomcat() {
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin > /dev/null
+  TUSERS <<- _EOF_
+  <?xml version='1.0' encoding='utf-8'?>
+  <tomcat-users>
+    <role rolename="manager-gui"/>
+    <role rolename="admin-gui"/>
+    <user username="uefs" password="uefs" roles="manage-gui,admin-gui"/>
+  </tomcat-users>
+_EOF_
+  $TUSERS > /etc/tomcat7/tomcat-users.xml
 }
 
 installPostgres() {
@@ -146,10 +143,8 @@ installPostgres() {
 
 installSOS() {
   checkRoot
-  addRepositories
-  checkApacheInstalled
+  addRepositories  
   installJava
-  installApache
   installTomcat
   installPostgres
   printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n\n"

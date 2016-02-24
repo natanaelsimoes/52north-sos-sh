@@ -34,7 +34,7 @@ clean_up() { # Perform pre-exit housekeeping
 }
 
 error_exit() {
-  echo -e "${PROGNAME}: ${1:-"Unknown Error"}" >&2
+  printf "${PROGNAME}: ${1:-"Unknown Error"}" >&2
   clean_up
   exit 1
 }
@@ -57,7 +57,7 @@ signal_exit() { # Handle trapped signals
 }
 
 usage() {
-  echo -e "Usage: $PROGNAME [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]"
+  printf "Usage: $PROGNAME [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]"
 }
 
 help_message() {
@@ -123,7 +123,7 @@ installSOS() {
   installApache
   installTomcat
   installPostgres
-  echo "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n"
+  printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n"
 }
 
 # Parse command-line
@@ -143,7 +143,7 @@ while [[ -n $1 ]]; do
       usage
       error_exit "Unknown option $1" ;;
     *)
-      echo "Argument $1 to process..." ;;
+      printf "Argument $1 to process..." ;;
   esac
   shift
 done

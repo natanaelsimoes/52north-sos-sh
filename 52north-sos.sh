@@ -104,7 +104,7 @@ checkApacheInstalled() {
 
 addRepositories() {
   REPOADDED=$(grep 'apt.postgresql' /etc/apt/sources.list)
-  if [[ $REPOADDED == '' ]=; then
+  if [[ $REPOADDED == '' ]; then
     printf "Adding needed repositories..."
     OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
     OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  

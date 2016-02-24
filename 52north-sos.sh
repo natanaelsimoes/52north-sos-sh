@@ -28,8 +28,6 @@
 
 PROGNAME=${0##*/}
 VERSION="0.1"
-OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
-OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
 
 clean_up() { # Perform pre-exit housekeeping
   return
@@ -107,6 +105,8 @@ checkApacheInstalled() {
 addRepositories() {
   
   printf "Adding needed repositories..."
+  OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
+  OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
   apt-get -qq -y install python-software-properties
   add-apt-repository ppa:webupd8team/java -y  
   if [[ $OSCODENAME != 'vivid' ]]; then

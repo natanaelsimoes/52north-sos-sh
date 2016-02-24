@@ -103,18 +103,19 @@ checkApacheInstalled() {
 }
 
 addRepositories() {
-  
-  printf "Adding needed repositories..."
-  OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
-  OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
-  apt-get -qq -y install python-software-properties
-  add-apt-repository ppa:webupd8team/java -y  
-  if [[ $OSCODENAME != 'vivid' ]]; then
-    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list'
+  REPOADDED=$(grep 'apt.postgresql' /etc/apt/sources.list)
+  if [[ $REPOADDED == '' ]=; then
+    printf "Adding needed repositories..."
+    OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
+    OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
+    apt-get -qq -y install python-software-properties
+    add-apt-repository ppa:webupd8team/java -y  
+    if [[ $OSCODENAME != 'vivid' ]]; then
+      echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list
+    fi
+    wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
+    apt-get update
   fi
-  wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
-  apt-get update
-  
 }
 
 installJava() {

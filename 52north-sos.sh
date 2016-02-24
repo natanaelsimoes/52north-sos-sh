@@ -114,7 +114,9 @@ addRepositories() {
       echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list
     fi
     wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
-    apt-get update
+    clear
+    printf "Updating repositories...\n"
+    apt-get update > /dev/null
   fi
   clear
 }
@@ -122,24 +124,24 @@ addRepositories() {
 installJava() {
   if [[ $JAVA_HOME == "" ]]; then
     printf "Installing Java 7...\n";    
-    apt-get -qq -y install oracle-java7-installer
+    apt-get -qq -y install oracle-java7-installer > /dev/null
   fi
 }
 
 installApache() {
-  printf "Installing Apache 2...\n";
-  apt-get -qq -y install apache2 maven
+  printf "\nInstalling Apache 2...\n";
+  apt-get -qq -y install apache2 maven > /dev/null
 }
 
 installTomcat() {
-  printf "installing Tomcat 7...\n";
-  apt-get -qq -y install tomcat7 tomcat7-admin
+  printf "\nInstalling Tomcat 7...\n";
+  apt-get -qq -y install tomcat7 tomcat7-admin > /dev/null
 }
 
 installPostgres() {
-  printf "Installing PostgreSQL 9.4 + PostGIS...\n";
-  apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
-  apt-get -qq -m -y install postgresql-9.4-postgis postgresql-contrib #older OS
+  printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
+  apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4 > /dev/null
+  apt-get -qq -m -y install postgresql-9.4-postgis postgresql-contrib > /dev/null #older OS
 }
 
 installSOS() {

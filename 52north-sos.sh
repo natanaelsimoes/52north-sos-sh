@@ -28,6 +28,8 @@
 
 PROGNAME=${0##*/}
 VERSION="0.1"
+OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
+OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
 
 clean_up() { # Perform pre-exit housekeeping
   return
@@ -101,27 +103,41 @@ checkApacheInstalled() {
   fi
 }
 
-installJava() {
+addRepositories() {
+  
+  printf "Adding needed repositories..."
   apt-get -qq install python-software-properties
-  add-apt-repository ppa:webupd8team/java -y
-  apt-get -qq update
-  apt-get -qq install oracle-java7-installer
+  add-apt-repository ppa:webupd8team/java -y  
+  if [[ $OSCODENAME != 'vivid' ]]; then
+    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list'
+  fi
+  wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
+  apt-get update
+}
+
+installJava() {
+  if [[ $JAVA_HOME == "" ]]; then
+    printf "Installing Java 7...\n";    
+    apt-get -qq install oracle-java7-installer
+  fi
 }
 
 installApache() {
-return
+  printf "Installing Apache 2...\n";
+  apt-get -qq install apache2 maven
 }
 
 installTomcat() {
-return
-}
-
-isPostgresInstalled() {
-return
+  printf "installing Tomcat 7...\n";
+  apt-get -qq install tomcat7 tomcat7-admin
 }
 
 installPostgres() {
-return
+  printf "Installing PostgreSQL 9.4 + PostGIS...\n";
+  if [[ $OSCODENAME == '
+  apt-get install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
+  apt-get install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
+
 }
 
 installSOS() {

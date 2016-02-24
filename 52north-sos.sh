@@ -37,6 +37,7 @@ clean_up() { # Perform pre-exit housekeeping
 
 error_exit() {
   printf "${PROGNAME}: ${1:-"Unknown Error"}" >&2
+  printf "\n"
   clean_up
   exit 1
 }
@@ -113,6 +114,7 @@ addRepositories() {
   fi
   wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
   apt-get update
+  clear
 }
 
 installJava() {
@@ -140,6 +142,7 @@ installPostgres() {
 
 installSOS() {
   checkRoot
+  addRepositories
   checkApacheInstalled
   installJava
   installApache

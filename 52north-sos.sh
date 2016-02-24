@@ -126,18 +126,18 @@ installJava() {
 
 installApache() {
   printf "Installing Apache 2...\n";
-  apt-get -qq install apache2 maven
+  apt-get install apache2 maven
 }
 
 installTomcat() {
   printf "installing Tomcat 7...\n";
-  apt-get -qq install tomcat7 tomcat7-admin
+  apt-get install tomcat7 tomcat7-admin
 }
 
 installPostgres() {
   printf "Installing PostgreSQL 9.4 + PostGIS...\n";
-  apt-get install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
-  apt-get install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
+  apt-get -m install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
+  apt-get -m install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
 }
 
 installSOS() {

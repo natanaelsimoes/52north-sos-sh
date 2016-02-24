@@ -101,6 +101,13 @@ checkApacheInstalled() {
   fi
 }
 
+installJava() {
+  apt-get -qq install python-software-properties
+  add-apt-repository ppa:webupd8team/java -y
+  apt-get -qq update
+  apt-get -qq install oracle-java7-installer
+}
+
 installApache() {
 return
 }
@@ -120,10 +127,11 @@ return
 installSOS() {
   checkRoot
   checkApacheInstalled
+  installJava
   installApache
   installTomcat
   installPostgres
-  printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n"
+  printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n\n"
 }
 
 # Parse command-line

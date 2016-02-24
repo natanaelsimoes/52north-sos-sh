@@ -104,7 +104,7 @@ checkApacheInstalled() {
 
 addRepositories() {
   REPOADDED=$(grep 'apt.postgresql' /etc/apt/sources.list)
-  if [[ $REPOADDED == "" ]; then
+  if [[ $REPOADDED == "" ]]; then
     printf "Adding needed repositories..."
     OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
     OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
@@ -116,6 +116,7 @@ addRepositories() {
     wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
     apt-get update
   fi
+  clear
 }
 
 installJava() {
@@ -127,18 +128,18 @@ installJava() {
 
 installApache() {
   printf "Installing Apache 2...\n";
-  apt-get -y install apache2 maven
+  apt-get -qq -y install apache2 maven
 }
 
 installTomcat() {
   printf "installing Tomcat 7...\n";
-  apt-get -y install tomcat7 tomcat7-admin
+  apt-get -qq -y install tomcat7 tomcat7-admin
 }
 
 installPostgres() {
   printf "Installing PostgreSQL 9.4 + PostGIS...\n";
-  apt-get -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
-  apt-get -m -y install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
+  apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
+  apt-get -qq -m -y install postgresql-9.4-postgis postgresql-contrib #older OS
 }
 
 installSOS() {

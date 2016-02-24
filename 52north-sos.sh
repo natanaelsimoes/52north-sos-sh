@@ -134,10 +134,8 @@ installTomcat() {
 
 installPostgres() {
   printf "Installing PostgreSQL 9.4 + PostGIS...\n";
-  if [[ $OSCODENAME == '
   apt-get install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
   apt-get install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
-
 }
 
 installSOS() {

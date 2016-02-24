@@ -107,37 +107,37 @@ checkApacheInstalled() {
 addRepositories() {
   
   printf "Adding needed repositories..."
-  apt-get -qq install python-software-properties
+  apt-get -qq -y install python-software-properties
   add-apt-repository ppa:webupd8team/java -y  
   if [[ $OSCODENAME != 'vivid' ]]; then
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list'
   fi
   wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
   apt-get update
-  clear
+  
 }
 
 installJava() {
   if [[ $JAVA_HOME == "" ]]; then
     printf "Installing Java 7...\n";    
-    apt-get -qq install oracle-java7-installer
+    apt-get -qq -y install oracle-java7-installer
   fi
 }
 
 installApache() {
   printf "Installing Apache 2...\n";
-  apt-get install apache2 maven
+  apt-get -y install apache2 maven
 }
 
 installTomcat() {
   printf "installing Tomcat 7...\n";
-  apt-get install tomcat7 tomcat7-admin
+  apt-get -y install tomcat7 tomcat7-admin
 }
 
 installPostgres() {
   printf "Installing PostgreSQL 9.4 + PostGIS...\n";
-  apt-get -m install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
-  apt-get -m install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
+  apt-get -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
+  apt-get -m -y install postgresql-9.4-postgis pgadmin3 postgresql-contrib #older OS
 }
 
 installSOS() {

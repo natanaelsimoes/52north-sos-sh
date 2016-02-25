@@ -110,22 +110,26 @@ addRepositories() {
     wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
     clear
     printf "Updating repositories...\n"
-    apt-get update > /dev/null
+    apt-get update
   fi
   clear
 }
 
 installRequisites() {
   printf "Installing Git...\n";
-  apt-get -qq -y install git > /dev/null
+  apt-get -qq -y install git
   printf "\nInstalling XMLStarlet...\n";
-  apt-get -qq -y install xml-twig-tools > /dev/null
+  apt-get -qq -y install xml-twig-tools
+  printf "\nInstalling Maven...\n";
+  apt-get -qq -y install maven
   if [[ $JAVA_HOME == "" ]]; then
     printf "\nInstalling Java 7...\n";
-    apt-get -qq -y install oracle-java7-installer > /dev/null
+    apt-get -qq -y install oracle-java7-installer
+    apt-get -qq -y install oracle-java7-set-default
+    source /etc/profile
   fi
   printf "\nInstalling Tomcat 7...\n";
-  apt-get -qq -y install tomcat7 tomcat7-admin > /dev/null
+  apt-get -qq -y install tomcat7 tomcat7-admin ant
   TUSERS=$(cat <<- _EOF_
   <?xml version='1.0' encoding='utf-8'?>
   <tomcat-users>
@@ -137,8 +141,8 @@ _EOF_
 )
   echo -e $TUSERS > /etc/tomcat7/tomcat-users.xml
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
-  apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4 > /dev/null
-  service tomcat7 restart > /dev/null
+  apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
+  service tomcat7 restart
 }
 
 configureDatabase() {
@@ -151,19 +155,26 @@ configureDatabase() {
 }
 
 buildSOS() {
-  PGTEMPLATE="~/SOS/misc/conf/datasource.properties.postgres.template.seriesConcept"
-  DATASOURCE="~/SOS/misc/conf/datasource.properties"
-  CURVERSION=$(xml_grep 'project/version' ~/SOS/pom.xml --text_only)
-  rm pom.xml
-  wget --quiet https://raw.githubusercontent.com/52north/SOS/develop/pom.xml
-  REMOTEVERSION=$(xml_grep 'project/version' pom.xml --text_only)
-  if [[ $CURVERSION == $REMOTEVERSION ]]; then
-    rm -rf ~/SOS
-    printf "\nCloning 52North SOS (it will take a while)\n"
-    git clone https://github.com/52north/SOS ~/SOS > /dev/null
-    cd ~/SOS
-    git branch dev
-    cd ~/
+  PGTEMPLATE="/root/SOS/misc/conf/datasource.properties.postgres.template.seriesConcept"
+  DATASOURCE="/root/SOS/misc/conf/datasource.properties"
+  if [ -f /root/SOS/pom.xml ]; then
+    CURVERSION=$(xml_grep 'project/version' /root/SOS/pom.xml --text_only)
+    CURCOMMITID=$(git log -n 1 --pretty=format:"%H")
+  fi
+  wget --quiet https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/dev/VERSION
+  REMOTECOMMITID=$(cat VERSION)
+  rm VERSION
+  if [[ $CURCOMMITID != $REMOTECOMMITID ]]; then
+    printf "\nCloning/updating 52North SOS source code (it will take a while)\n"
+    if [! -f /root/SOS/ ]; then           
+      git clone https://github.com/52north/SOS /root/SOS
+      cd /root/SOS/
+    else
+      cd /root/SOS/
+      git pull
+    fi
+    git reset --hard $REMOTECOMMITID
+    NEWVERSION=$(xml_grep 'project/version' /root/SOS/pom.xml --text_only)
     rm $DATASOURCE > /dev/null
     cp $PGTEMPLATE $DATASOURCE
     clear
@@ -175,9 +186,10 @@ buildSOS() {
     sleep 1
     printf "1... "
     sleep 1
-    mvn package -Pconfigure-datasource,use-default-settings -f ~/SOS/pom.xml
-    cp ~/SOS/webapp-bundle/target/52n-sos-webapp\#\#$REMOTEVERSION.war /var/lib/tomcat7/webapps/
-    curl --user uefs:uefs http://localhost:8080/manager/text/start?path=/52n-sos-webapp
+    setHost
+    mvn package -Pconfigure-datasource,use-default-settings
+    cp /root/SOS/webapp-bundle/target/52n-sos-webapp\#\#$NEWVERSION.war /var/lib/tomcat7/webapps/
+    #curl --user uefs:uefs http://localhost:8080/manager/text/start?path=/52n-sos-webapp > /dev/null
   else
     printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
   fi
@@ -203,7 +215,7 @@ setHost() {
   }
 _EOF_
 )
-  #echo -e $JSSETINGS > static
+  #echo -e $JSSETINGS > /root/SOS/webapp-bundle/src/static/settings.json
 }
 
 checkHostIP() {
@@ -221,12 +233,15 @@ installSOS() {
   addRepositories
   installRequisites
   configureDatabase
-  updateSOS
+  buildSOS
+  printf "\n\nInstalation completed. Visit http://$iphost:8080/52n-sos-webapp/ to start using 52North SOS.\n\n"
 }
 
 updateSOS() {
+  checkRoot
+  checkHostIP
   buildSOS
-  printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n\n"
+  printf "\n\nUpdate completed. Visit http://$iphost:8080/52n-sos-webapp/ to start using 52North SOS.\n\n"
 }
 
 # Parse command-line

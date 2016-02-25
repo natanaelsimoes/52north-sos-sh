@@ -1,4 +1,0 @@
-#!/bin/bash
-sudo -u postgres createuser -d -E -i -l -P -r -s uefs | echo -ne 'uefs\n' |  -ne 'uefs\n'
-return
-exit

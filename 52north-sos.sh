@@ -158,9 +158,12 @@ buildSOS() {
   wget --quiet https://raw.githubusercontent.com/52north/SOS/develop/pom.xml
   REMOTEVERSION=$(xml_grep 'project/version' pom.xml --text_only)
   if [[ $CURVERSION == $REMOTEVERSION ]]; then
-    #rm -rf ~/SOS
+    rm -rf ~/SOS
     printf "\nCloning 52North SOS (it will take a while)\n"
-    #git clone https://github.com/52north/SOS ~/SOS > /dev/null
+    git clone https://github.com/52north/SOS ~/SOS > /dev/null
+    cd ~/SOS
+    git branch dev
+    cd ~/
     rm $DATASOURCE > /dev/null
     cp $PGTEMPLATE $DATASOURCE
     clear

@@ -275,4 +275,3 @@ elif [[ $self_update ]]; then
 fi
 
 graceful_exit
-

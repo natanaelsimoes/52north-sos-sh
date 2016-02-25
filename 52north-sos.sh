@@ -215,7 +215,7 @@ setHost() {
   }
 _EOF_
 )
-  #echo -e $JSSETINGS > /root/SOS/webapp-bundle/src/static/settings.json
+  echo -e $JSSETINGS > /root/SOS/webapp-bundle/src/main/webapp/static/client/jsClient/settings.json
 }
 
 checkHostIP() {

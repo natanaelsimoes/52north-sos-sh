@@ -147,10 +147,10 @@ _EOF_
 
 configureDatabase() {
   DBEXISTS=$(sudo -u postgres psql -c "\l" | grep sos2)
-  if [[ DBEXISTS == '' ]]; then
+  if [[ $DBEXISTS == '' ]]; then
     sudo -u postgres createdb sos2
     sudo -u postgres psql sos2 -c "CREATE EXTENSION postgis;"
-    sudo -u postgres psql -c "ALTER USER 'postgres' WITH PASSWORD 'postgres';"
+    sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
   fi
 }
 

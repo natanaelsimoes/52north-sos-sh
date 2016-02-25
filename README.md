@@ -1,5 +1,5 @@
 # 52north-sos.sh
-This is bash script to install and manage 52°North SOS in a debian-based linux server.
+This is a bash script to install and manage 52°North SOS in a debian-based linux server.
 
 Main project can be viewed in [52° North GitHub repository][1].
 

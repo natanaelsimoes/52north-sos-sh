@@ -166,7 +166,7 @@ buildSOS() {
   rm VERSION
   if [[ $CURCOMMITID != $REMOTECOMMITID ]]; then
     printf "\nCloning/updating 52North SOS source code (it will take a while)\n"
-    if [! -f /root/SOS/ ]; then           
+    if [ ! -d /root/SOS/ ]; then           
       git clone https://github.com/52north/SOS /root/SOS
       cd /root/SOS/
     else

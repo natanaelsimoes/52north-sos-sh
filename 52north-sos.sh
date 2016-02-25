@@ -72,8 +72,8 @@ help_message() {
   Options:
   -h, --help         Display this help message and exit.
   -i, --install      Install 52North SOS for the first time.
-  -t, --host host    Set the specified argument as the host 
-                     (to configure jsClient API provider). 
+  -t, --host host    Set the specified argument as the host
+                     (to configure jsClient API provider).
                      Will use eth0 address as default if not set.
                      Where 'host' is the IP address or network name.
   -u, --update       Update 52North SOS if a new version is available
@@ -101,9 +101,9 @@ addRepositories() {
   if [[ $REPOADDED == "" ]]; then
     printf "Adding needed repositories..."
     OSCODENAME=$(cat /etc/*-release | grep "DISTRIB_CODENAME=") #Get distribution codename
-    OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)  
+    OSCODENAME=$(echo $OSCODENAME| cut -d '=' -f 2)
     apt-get -qq -y install python-software-properties
-    add-apt-repository ppa:webupd8team/java -y  
+    add-apt-repository ppa:webupd8team/java -y
     if [[ $OSCODENAME != 'vivid' ]]; then
       echo "deb http://apt.postgresql.org/pub/repos/apt $OSCODENAME-pgdg main" >> /etc/apt/sources.list
     fi
@@ -115,20 +115,15 @@ addRepositories() {
   clear
 }
 
-installGit() {
+installRequisites() {
   printf "Installing Git...\n";
   apt-get -qq -y install git > /dev/null
+  printf "\nInstalling XMLStarlet...\n";
   apt-get -qq -y install xml-twig-tools > /dev/null
-}
-
-installJava() {
   if [[ $JAVA_HOME == "" ]]; then
-    printf "\nInstalling Java 7...\n";    
+    printf "\nInstalling Java 7...\n";
     apt-get -qq -y install oracle-java7-installer > /dev/null
   fi
-}
-
-installTomcat() {
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin > /dev/null
   TUSERS=$(cat <<- _EOF_
@@ -141,12 +136,9 @@ installTomcat() {
 _EOF_
 )
   echo -e $TUSERS > /etc/tomcat7/tomcat-users.xml
-  service tomcat7 restart > /dev/null
-}
-
-installPostgres() {
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
   apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4 > /dev/null
+  service tomcat7 restart > /dev/null
 }
 
 configureDatabase() {
@@ -163,7 +155,7 @@ buildSOS() {
   DATASOURCE="~/SOS/misc/conf/datasource.properties"
   CURVERSION=$(xml_grep 'project/version' ~/SOS/pom.xml --text_only)
   rm pom.xml
-  wget --quiet https://raw.githubusercontent.com/52north/SOS/master/pom.xml
+  wget --quiet https://raw.githubusercontent.com/52north/SOS/develop/pom.xml
   REMOTEVERSION=$(xml_grep 'project/version' pom.xml --text_only)
   if [[ $CURVERSION == $REMOTEVERSION ]]; then
     #rm -rf ~/SOS
@@ -180,20 +172,56 @@ buildSOS() {
     sleep 1
     printf "1... "
     sleep 1
-    mvn package -Pconfigure-datasource,use-default-settings
+    mvn package -Pconfigure-datasource,use-default-settings -f ~/SOS/pom.xml
+    cp ~/SOS/webapp-bundle/target/52n-sos-webapp\#\#$REMOTEVERSION.war /var/lib/tomcat7/webapps/
+    curl --user uefs:uefs http://localhost:8080/manager/text/start?path=/52n-sos-webapp
   else
     printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
   fi
 }
 
+setHost() {
+  JSSETINGS= $(cat <<- _EOF_
+  {
+    "selectedLineWidth": 4,
+    "commonLineWidth": 1,
+    "restApiUrls": {
+      "http://$iphost:8080/52n-sos-webapp/api/v1/": "localhost"
+    },
+    "defaultProvider": {
+      "serviceID": "1",
+      "apiUrl": "http://$iphost:8080/52n-sos-webapp/api/v1/"
+    },
+    "chartOptions":{
+      "yaxis":{
+        "tickDecimals" : 2
+      }
+    }
+  }
+_EOF_
+)
+  #echo -e $JSSETINGS > static
+}
+
+checkHostIP() {
+  if [[ $iphost == "" ]]; then
+    iphost=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+    if [[ $iphost == "" ]]; then
+      error_exit "Could not get this host IP automatically, please provide one with --host parameter"
+    fi
+  fi
+}
+
 installSOS() {
   checkRoot
-  addRepositories  
-  installGit
-  installJava
-  installTomcat
-  installPostgres
+  checkHostIP
+  addRepositories
+  installRequisites
   configureDatabase
+  updateSOS
+}
+
+updateSOS() {
   buildSOS
   printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n\n"
 }
@@ -204,9 +232,9 @@ while [[ -n $1 ]]; do
     -h | --help)
       help_message; graceful_exit ;;
     -i | --install)
-      install=yes ;;    
+      install=yes ;;
     -t | --host)
-      shift; host="$1" ;;
+      shift; iphost="$1" ;;
     -u | --update)
       update=yes ;;
     -s | --self-update)

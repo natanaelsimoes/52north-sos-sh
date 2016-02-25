@@ -28,6 +28,7 @@
 
 PROGNAME=${0##*/}
 VERSION="0.1"
+DIR=$(pwd)
 
 clean_up() { # Perform pre-exit housekeeping
   return
@@ -114,9 +115,15 @@ addRepositories() {
   clear
 }
 
+installGit() {
+  printf "Installing Git...\n";
+  apt-get -qq -y install git > /dev/null
+  apt-get -qq -y install xml-twig-tools > /dev/null
+}
+
 installJava() {
   if [[ $JAVA_HOME == "" ]]; then
-    printf "Installing Java 7...\n";    
+    printf "\nInstalling Java 7...\n";    
     apt-get -qq -y install oracle-java7-installer > /dev/null
   fi
 }
@@ -124,29 +131,70 @@ installJava() {
 installTomcat() {
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin > /dev/null
-  TUSERS <<- _EOF_
+  TUSERS=$(cat <<- _EOF_
   <?xml version='1.0' encoding='utf-8'?>
   <tomcat-users>
     <role rolename="manager-gui"/>
     <role rolename="admin-gui"/>
-    <user username="uefs" password="uefs" roles="manage-gui,admin-gui"/>
+    <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
   </tomcat-users>
 _EOF_
-  $TUSERS > /etc/tomcat7/tomcat-users.xml
+)
+  echo -e $TUSERS > /etc/tomcat7/tomcat-users.xml
+  service tomcat7 restart > /dev/null
 }
 
 installPostgres() {
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
   apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4 > /dev/null
-  apt-get -qq -m -y install postgresql-9.4-postgis postgresql-contrib > /dev/null #older OS
+}
+
+configureDatabase() {
+  DBEXISTS=$(sudo -u postgres psql -c "\l" | grep sos2)
+  if [[ DBEXISTS == '' ]]; then
+    sudo -u postgres createdb sos2
+    sudo -u postgres psql sos2 -c "CREATE EXTENSION postgis;"
+    sudo -u postgres psql -c "ALTER USER 'postgres' WITH PASSWORD 'postgres';"
+  fi
+}
+
+buildSOS() {
+  PGTEMPLATE="~/SOS/misc/conf/datasource.properties.postgres.template.seriesConcept"
+  DATASOURCE="~/SOS/misc/conf/datasource.properties"
+  CURVERSION=$(xml_grep 'project/version' ~/SOS/pom.xml --text_only)
+  rm pom.xml
+  wget --quiet https://raw.githubusercontent.com/52north/SOS/master/pom.xml
+  REMOTEVERSION=$(xml_grep 'project/version' pom.xml --text_only)
+  if [[ $CURVERSION == $REMOTEVERSION ]]; then
+    #rm -rf ~/SOS
+    printf "\nCloning 52North SOS (it will take a while)\n"
+    #git clone https://github.com/52north/SOS ~/SOS > /dev/null
+    rm $DATASOURCE > /dev/null
+    cp $PGTEMPLATE $DATASOURCE
+    clear
+    printf "\nPreparing to compile 52North SOS, plese take a break (it will take around 30 minutes)...\n"
+    sleep 2
+    printf "Starts in 3... "
+    sleep 1
+    printf "2..."
+    sleep 1
+    printf "1... "
+    sleep 1
+    mvn package -Pconfigure-datasource,use-default-settings
+  else
+    printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
+  fi
 }
 
 installSOS() {
   checkRoot
   addRepositories  
+  installGit
   installJava
   installTomcat
   installPostgres
+  configureDatabase
+  buildSOS
   printf "\n\nInstalation complete. Visit xxx to start using 52North SOS.\n\n"
 }
 

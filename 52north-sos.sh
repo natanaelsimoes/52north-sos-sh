@@ -27,7 +27,7 @@
 # ---------------------------------------------------------------------------
 
 PROGNAME=${0##*/}
-VERSION="0.1"
+VERSION="1.0"
 DIR=$(pwd)
 
 clean_up() { # Perform pre-exit housekeeping
@@ -161,12 +161,12 @@ buildSOS() {
     CURVERSION=$(xml_grep 'project/version' /root/SOS/pom.xml --text_only)
     CURCOMMITID=$(git log -n 1 --pretty=format:"%H")
   fi
-  wget --quiet https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/dev/VERSION
+  wget --quiet https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/master/VERSION
   REMOTECOMMITID=$(cat VERSION)
   rm VERSION
   if [[ $CURCOMMITID != $REMOTECOMMITID ]]; then
     printf "\nCloning/updating 52North SOS source code (it will take a while)\n"
-    if [ ! -d /root/SOS/ ]; then           
+    if [ ! -d /root/SOS/ ]; then
       git clone https://github.com/52north/SOS /root/SOS
       cd /root/SOS/
     else
@@ -189,7 +189,6 @@ buildSOS() {
     setHost
     mvn package -Pconfigure-datasource,use-default-settings
     cp /root/SOS/webapp-bundle/target/52n-sos-webapp\#\#$NEWVERSION.war /var/lib/tomcat7/webapps/
-    #curl --user uefs:uefs http://localhost:8080/manager/text/start?path=/52n-sos-webapp > /dev/null
   else
     printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
   fi

@@ -7,7 +7,7 @@ Main project can be viewed in [52° North GitHub repository][1].
 ```
 wget https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/master/52north-sos.sh
 chmod +x 52north-sos.sh
-mv 52north-sos.sh /usr/local/bin/52north-sos
+sudo mv 52north-sos.sh /usr/local/bin/52north-sos
 ```
 
 ## Usage

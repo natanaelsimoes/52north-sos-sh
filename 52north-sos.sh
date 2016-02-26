@@ -243,6 +243,33 @@ updateSOS() {
   printf "\n\nUpdate completed. Visit http://$iphost:8080/52n-sos-webapp/ to start using 52North SOS.\n\n"
 }
 
+selfUpdate() {
+  checkRoot
+  printf "Downloading latest version...\n"
+  if ! wget --quiet --output-document="$PROGNAME.tmp" https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/master/52north-sos.sh ; then
+    error_exit "Some error occurred while trying to get new version."
+  fi  
+  CHMOD=$(stat -c '%a' $PROGNAME)
+  CHOWN=$(stat -c '%U:%G' $PROGNAME)
+  if ! chmod $CHMOD "$PROGNAME.tmp" ; then
+    error_exit "Some error occurred while trying to set chmod"
+  fi
+  if ! chown $CHOWN "$PROGNAME.tmp" ; then
+    error_exit "Some error occurred while trying to set chown"
+  fi
+  cat > updateSOS.sh << _EOF_
+#!/bin/bash
+# Overwrite old file with new
+if mv "$PROGNAME.tmp" "$PROGNAME"; then
+  printf "\nSelf-update completed.\n"
+  rm \$0
+else
+  printf "\nSelf-update failed.\n"
+fi
+_EOF_
+  exec /bin/bash updateSOS.sh
+}
+
 # Parse command-line
 while [[ -n $1 ]]; do
   case $1 in

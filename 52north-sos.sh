@@ -21,14 +21,11 @@
 #SOFTWARE.
 
 # Usage: 52north-sos.sh [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]
-
-# Revision history:
-# 2016-02-24 Created by new_script ver. 3.3
 # ---------------------------------------------------------------------------
 
 PROGNAME=${0##*/}
 VERSION="1.0"
-DIR=$(pwd)
+PROGPATH=$BASH_SOURCE
 
 clean_up() { # Perform pre-exit housekeeping
   return
@@ -134,6 +131,7 @@ installRequisites() {
   <?xml version='1.0' encoding='utf-8'?>
   <tomcat-users>
     <role rolename="manager-gui"/>
+    <role rolename="manager-script"/>
     <role rolename="admin-gui"/>
     <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
   </tomcat-users>
@@ -184,10 +182,13 @@ buildSOS() {
     sleep 1
     printf "2..."
     sleep 1
-    printf "1... "
+    printf "1...\n\n"
     sleep 1
     setHost
     mvn package -Pconfigure-datasource,use-default-settings
+    if [[ $CURVERSION != "" ]]; then
+      wget --http-user=uefs --http-password=uefs "http://localhost:8080/manager/text/undeploy?path=/52n-sos-webapp&version=$CURVERSION" --quiet -O -
+    fi
     cp /root/SOS/webapp-bundle/target/52n-sos-webapp\#\#$NEWVERSION.war /var/lib/tomcat7/webapps/
   else
     printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
@@ -249,8 +250,8 @@ selfUpdate() {
   if ! wget --quiet --output-document="$PROGNAME.tmp" https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/master/52north-sos.sh ; then
     error_exit "Some error occurred while trying to get new version."
   fi  
-  CHMOD=$(stat -c '%a' $PROGNAME)
-  CHOWN=$(stat -c '%U:%G' $PROGNAME)
+  CHMOD=$(stat -c '%a' $PROGPATH)
+  CHOWN=$(stat -c '%U:%G' $PROGPATH)
   if ! chmod $CHMOD "$PROGNAME.tmp" ; then
     error_exit "Some error occurred while trying to set chmod"
   fi
@@ -259,8 +260,7 @@ selfUpdate() {
   fi
   cat > updateSOS.sh << _EOF_
 #!/bin/bash
-# Overwrite old file with new
-if mv "$PROGNAME.tmp" "$PROGNAME"; then
+if mv "$PROGNAME.tmp" "$PROGPATH"; then
   printf "\nSelf-update completed.\n"
   rm \$0
 else

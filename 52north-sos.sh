@@ -83,7 +83,7 @@ _EOF_
 }
 
 tomcat_user_file() { # Return Tomcat user file
-  return $(cat <<- _EOF_
+  cat <<- _EOF_
 <?xml version='1.0' encoding='utf-8'?>
 <tomcat-users>
   <role rolename="manager-gui"/>
@@ -92,11 +92,11 @@ tomcat_user_file() { # Return Tomcat user file
   <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
 </tomcat-users>
 _EOF_
-)
+  return
 }
 
 sos_client_settings_file() {
-  return $(cat <<- _EOF_
+  cat <<- _EOF_
 {
   "selectedLineWidth": 4,
   "commonLineWidth": 1,
@@ -114,7 +114,7 @@ sos_client_settings_file() {
   }
 }
 _EOF_
-)
+  return
 }
 
 # Trap signals
@@ -161,7 +161,7 @@ install_requisites() {
   fi
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin ant
-  TUSERS=tomcat_user_file
+  TUSERS=$(tomcat_user_file)
   printf "$TUSERS" > /etc/tomcat7/tomcat-users.xml
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
   apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
@@ -219,12 +219,12 @@ build_sos() {
 }
 
 set_host() {
-  JSSETINGS=sos_client_settings_file
+  JSSETINGS=$(sos_client_settings_file)
   printf "$JSSETINGS" > /root/SOS/webapp-bundle/src/main/webapp/static/client/jsClient/settings.json
 }
 
 update_host() {
-  JSSETINGS=sos_client_settings_file
+  JSSETINGS=$(sos_client_settings_file)
   printf "$JSSETINGS" > /var/lib/tomcat7/webapps/52n-sos-webapp\#\#$1/static/client/jsClient/settings.json
 }
 

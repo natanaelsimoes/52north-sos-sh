@@ -128,16 +128,16 @@ installRequisites() {
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin ant
   TUSERS=$(cat <<- _EOF_
-  <?xml version='1.0' encoding='utf-8'?>
-  <tomcat-users>
-    <role rolename="manager-gui"/>
-    <role rolename="manager-script"/>
-    <role rolename="admin-gui"/>
-    <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
-  </tomcat-users>
+<?xml version='1.0' encoding='utf-8'?>
+<tomcat-users>
+  <role rolename="manager-gui"/>
+  <role rolename="manager-script"/>
+  <role rolename="admin-gui"/>
+  <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
+</tomcat-users>
 _EOF_
 )
-  echo -e $TUSERS > /etc/tomcat7/tomcat-users.xml
+  printf "$TUSERS" > /etc/tomcat7/tomcat-users.xml
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
   apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
   service tomcat7 restart
@@ -197,26 +197,26 @@ buildSOS() {
 }
 
 setHost() {
-  JSSETINGS= $(cat <<- _EOF_
-  {
-    "selectedLineWidth": 4,
-    "commonLineWidth": 1,
-    "restApiUrls": {
-      "http://$iphost:8080/52n-sos-webapp/api/v1/": "localhost"
-    },
-    "defaultProvider": {
-      "serviceID": "1",
-      "apiUrl": "http://$iphost:8080/52n-sos-webapp/api/v1/"
-    },
-    "chartOptions":{
-      "yaxis":{
-        "tickDecimals" : 2
-      }
+  JSSETINGS=$(cat <<- _EOF_
+{
+  "selectedLineWidth": 4,
+  "commonLineWidth": 1,
+  "restApiUrls": {
+    "http://$iphost:8080/52n-sos-webapp/api/v1/": "localhost"
+  },
+  "defaultProvider": {
+    "serviceID": "1",
+    "apiUrl": "http://$iphost:8080/52n-sos-webapp/api/v1/"
+  },
+  "chartOptions":{
+    "yaxis":{
+      "tickDecimals" : 2
     }
   }
+}
 _EOF_
 )
-  echo -e $JSSETINGS > /root/SOS/webapp-bundle/src/main/webapp/static/client/jsClient/settings.json
+  printf "$JSSETINGS" > /root/SOS/webapp-bundle/src/main/webapp/static/client/jsClient/settings.json
 }
 
 checkHostIP() {

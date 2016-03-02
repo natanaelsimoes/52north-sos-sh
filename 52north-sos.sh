@@ -31,14 +31,14 @@ clean_up() { # Perform pre-exit housekeeping
   return
 }
 
-error_exit() {
+error_exit() { # Exit with error observation
   printf "${PROGNAME}: ${1:-"Unknown Error"}" >&2
   printf "\n"
   clean_up
   exit 1
 }
 
-graceful_exit() {
+graceful_exit() { # Exit without errors
   clean_up
   exit
 }
@@ -55,11 +55,11 @@ signal_exit() { # Handle trapped signals
   esac
 }
 
-usage() {
+usage() { # Print usage message
   printf "Usage: $PROGNAME [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]"
 }
 
-help_message() {
+help_message() { # Return help message
   cat <<- _EOF_
   $PROGNAME ver. $VERSION
   Install and manage 52North SOS
@@ -82,18 +82,52 @@ _EOF_
   return
 }
 
+tomcat_user_file() { # Return Tomcat user file
+  return $(cat <<- _EOF_
+<?xml version='1.0' encoding='utf-8'?>
+<tomcat-users>
+  <role rolename="manager-gui"/>
+  <role rolename="manager-script"/>
+  <role rolename="admin-gui"/>
+  <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
+</tomcat-users>
+_EOF_
+)
+}
+
+sos_client_settings_file() {
+  return $(cat <<- _EOF_
+{
+  "selectedLineWidth": 4,
+  "commonLineWidth": 1,
+  "restApiUrls": {
+    "http://$iphost:8080/52n-sos-webapp/api/v1/": "localhost"
+  },
+  "defaultProvider": {
+    "serviceID": "1",
+    "apiUrl": "http://$iphost:8080/52n-sos-webapp/api/v1/"
+  },
+  "chartOptions":{
+    "yaxis":{
+      "tickDecimals" : 2
+    }
+  }
+}
+_EOF_
+)
+}
+
 # Trap signals
 trap "signal_exit TERM" TERM HUP
 trap "signal_exit INT"  INT
 
-# Check for root UID
-checkRoot() {
+check_root() { # Check for root UID
   if [[ $(id -u) != 0 ]]; then
     error_exit "You must be the superuser to run this script."
   fi
 }
 
-addRepositories() {
+add_repositories() { # Add needed repositores
   REPOADDED=$(grep 'apt.postgresql' /etc/apt/sources.list)
   if [[ $REPOADDED == "" ]]; then
     printf "Adding needed repositories..."
@@ -112,7 +146,7 @@ addRepositories() {
   clear
 }
 
-installRequisites() {
+install_requisites() {
   printf "Installing Git...\n";
   apt-get -qq -y install git
   printf "\nInstalling XMLStarlet...\n";
@@ -127,23 +161,14 @@ installRequisites() {
   fi
   printf "\nInstalling Tomcat 7...\n";
   apt-get -qq -y install tomcat7 tomcat7-admin ant
-  TUSERS=$(cat <<- _EOF_
-<?xml version='1.0' encoding='utf-8'?>
-<tomcat-users>
-  <role rolename="manager-gui"/>
-  <role rolename="manager-script"/>
-  <role rolename="admin-gui"/>
-  <user username="uefs" password="uefs" roles="manager-gui,admin-gui"/>
-</tomcat-users>
-_EOF_
-)
+  TUSERS=tomcat_user_file
   printf "$TUSERS" > /etc/tomcat7/tomcat-users.xml
   printf "\nInstalling PostgreSQL 9.4 + PostGIS...\n";
   apt-get -qq -m -y install postgresql-9.4-postgis-2.1 postgresql-contrib-9.4
   service tomcat7 restart
 }
 
-configureDatabase() {
+configure_database() {
   DBEXISTS=$(sudo -u postgres psql -c "\l" | grep sos2)
   if [[ $DBEXISTS == '' ]]; then
     sudo -u postgres createdb sos2
@@ -152,7 +177,7 @@ configureDatabase() {
   fi
 }
 
-buildSOS() {
+build_sos() {
   PGTEMPLATE="/root/SOS/misc/conf/datasource.properties.postgres.template.seriesConcept"
   DATASOURCE="/root/SOS/misc/conf/datasource.properties"
   if [ -f /root/SOS/pom.xml ]; then
@@ -177,49 +202,33 @@ buildSOS() {
     rm $DATASOURCE > /dev/null
     cp $PGTEMPLATE $DATASOURCE
     clear
-    printf "\nPreparing to compile 52North SOS, plese take a break (it will take around 30 minutes)...\n"
-    sleep 2
-    printf "Starts in 3... "
-    sleep 1
-    printf "2..."
-    sleep 1
-    printf "1...\n\n"
-    sleep 1
-    setHost
+    sleep 2 | printf "\nPreparing to compile 52North SOS, plese take a break (it will take around 30 minutes)...\n"
+    sleep 1 | printf "Starts in 3... "
+    sleep 1 | printf "2..."
+    sleep 1 | printf "1...\n\n"
+    set_host
     mvn package -Pconfigure-datasource,use-default-settings
     if [[ $CURVERSION != "" ]]; then
       wget --http-user=uefs --http-password=uefs "http://localhost:8080/manager/text/undeploy?path=/52n-sos-webapp&version=$CURVERSION" --quiet -O -
     fi
     cp /root/SOS/webapp-bundle/target/52n-sos-webapp\#\#$NEWVERSION.war /var/lib/tomcat7/webapps/
   else
+    update_host $CURVERSION
     printf "\n52North SOS is up-to-date (v. $CURVERSION)\n"
   fi
 }
 
-setHost() {
-  JSSETINGS=$(cat <<- _EOF_
-{
-  "selectedLineWidth": 4,
-  "commonLineWidth": 1,
-  "restApiUrls": {
-    "http://$iphost:8080/52n-sos-webapp/api/v1/": "localhost"
-  },
-  "defaultProvider": {
-    "serviceID": "1",
-    "apiUrl": "http://$iphost:8080/52n-sos-webapp/api/v1/"
-  },
-  "chartOptions":{
-    "yaxis":{
-      "tickDecimals" : 2
-    }
-  }
-}
-_EOF_
-)
+set_host() {
+  JSSETINGS=sos_client_settings_file
   printf "$JSSETINGS" > /root/SOS/webapp-bundle/src/main/webapp/static/client/jsClient/settings.json
 }
 
-checkHostIP() {
+update_host() {
+  JSSETINGS=sos_client_settings_file
+  printf "$JSSETINGS" > /var/lib/tomcat7/webapps/52n-sos-webapp\#\#$1/static/client/jsClient/settings.json
+}
+
+check_host_ip() {
   if [[ $iphost == "" ]]; then
     iphost=$(ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
     if [[ $iphost == "" ]]; then
@@ -228,25 +237,25 @@ checkHostIP() {
   fi
 }
 
-installSOS() {
-  checkRoot
-  checkHostIP
-  addRepositories
-  installRequisites
-  configureDatabase
-  buildSOS
+install_sos() {
+  check_root
+  check_host_ip
+  add_repositories
+  install_requisites
+  configure_database
+  build_sos
   printf "\n\nInstalation completed. Visit http://$iphost:8080/52n-sos-webapp/ to start using 52North SOS.\n\n"
 }
 
-updateSOS() {
-  checkRoot
-  checkHostIP
-  buildSOS
+update_sos() {
+  check_root
+  check_host_ip
+  build_sos
   printf "\n\nUpdate completed. Visit http://$iphost:8080/52n-sos-webapp/ to start using 52North SOS.\n\n"
 }
 
-selfUpdate() {
-  checkRoot
+self_update() {
+  check_root
   printf "Downloading latest version...\n"
   if ! wget --quiet --output-document="$PROGNAME.tmp" https://raw.githubusercontent.com/natanaelsimoes/52north-sos-sh/master/52north-sos.sh ; then
     error_exit "Some error occurred while trying to get new version."
@@ -259,7 +268,7 @@ selfUpdate() {
   if ! chown $CHOWN "$PROGNAME.tmp" ; then
     error_exit "Some error occurred while trying to set chown"
   fi
-  cat > updateSOS.sh << _EOF_
+  cat > update_sos.sh << _EOF_
 #!/bin/bash
 if mv "$PROGNAME.tmp" "$PROGPATH"; then
   printf "\nSelf-update completed.\n"
@@ -268,7 +277,7 @@ else
   printf "\nSelf-update failed.\n"
 fi
 _EOF_
-  exec /bin/bash updateSOS.sh
+  exec /bin/bash update_sos.sh
 }
 
 # Parse command-line
@@ -295,11 +304,11 @@ done
 
 # Main logic
 if [[ $install ]]; then
-  installSOS
+  install_sos
 elif [[ $update ]]; then
-  updateSOS
+  update_sos
 elif [[ $self_update ]]; then
-  selfUpdate
+  self_update
 fi
 
 graceful_exit

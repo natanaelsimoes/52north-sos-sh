@@ -156,6 +156,7 @@ buildSOS() {
   PGTEMPLATE="/root/SOS/misc/conf/datasource.properties.postgres.template.seriesConcept"
   DATASOURCE="/root/SOS/misc/conf/datasource.properties"
   if [ -f /root/SOS/pom.xml ]; then
+    cd /root/SOS/
     CURVERSION=$(xml_grep 'project/version' /root/SOS/pom.xml --text_only)
     CURCOMMITID=$(git log -n 1 --pretty=format:"%H")
   fi

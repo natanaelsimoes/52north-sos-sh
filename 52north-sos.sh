@@ -20,7 +20,7 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-# Usage: 52north-sos.sh [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]
+# Usage: 52north-sos.sh [-h|--help] [-i|--install] [-t|--host host] [-u|--update] [-s|--self-update]
 # ---------------------------------------------------------------------------
 
 PROGNAME=${0##*/}
@@ -56,7 +56,7 @@ signal_exit() { # Handle trapped signals
 }
 
 usage() { # Print usage message
-  printf "Usage: $PROGNAME [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]"
+  printf "Usage: $PROGNAME [-h|--help] [-i|--install] [-t|--host host] [-u|--update] [-s|--self-update]"
 }
 
 help_message() { # Return help message

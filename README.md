@@ -26,7 +26,7 @@ $ 52north-sos -h
   52north-sos ver. 1.0
   Install and manage 52North SOS
 
-  Usage: 52north-sos [-h|--help] [-i|--install] [-h|--host host] [-u|--update] [-s|--self-update]
+  Usage: 52north-sos [-h|--help] [-i|--install] [-t|--host host] [-u|--update] [-s|--self-update]
 
   Options:
   -h, --help         Display this help message and exit.
